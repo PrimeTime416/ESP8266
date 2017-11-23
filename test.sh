@@ -257,3 +257,4 @@ function main(){
 		clear
 		main
 	done
+#on Asus Tinker
