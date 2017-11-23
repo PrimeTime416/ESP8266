@@ -21,6 +21,21 @@ function show_Greeting(){
 	printf "${statementX}\n"
 }
 
+#ask user decision to continue, quit or start again?
+function get_UserContinue(){
+	printf "\nTo CONTINUE enter y?\n"
+	printf "To RESTART enter r?\n"
+	printf "To Quit enter q?\n"
+	read continueY
+	if [ "$continueY" == "y" ]
+		then return 0
+	elif [ "$continueY" == "q" ]
+    	then show_Exit
+	else
+		return 1
+	fi
+}
+
 #general error message for invalid file parameter
 show_InvalidMessage(){
 	commandX=$1
@@ -31,6 +46,25 @@ show_InvalidMessage(){
 		  	- ‘19200’
 		  	- ‘9600’
 			Try '${commandX} --help' for more information."
+}
+
+# show user instruction message on how to put the device in flash mode
+function show_FlashModeInstuction(){
+	local callbackX=$1
+	printf "\nYOU MUST PUT DEVICE IN FLASH MODE:\n"
+	printf "\n1) Hold FLASH button/pin down while...\n"
+	printf "\n2) Toggling REST button/pin\n"
+	printf "\nNote) The RED Led will dim indicating FLASH MODE set\n"
+	get_UserContinue
+	local continueY=$?
+	if [ "$continueY" == 0 ]
+		then
+			return 0
+	else
+		clear
+		#get_chipInfo
+		$callbackX
+	fi
 }
 
 #get system information as needed
@@ -46,7 +80,7 @@ function get_SysInfo(){
 function show_header(){
 #TODO: implement auto formating
 	printf "\n**************************
-	        \n** ${1:-"baud is MIA"} **
+	        \n** ${1:-"Hello World!"} **
 	        \n**************************\n"
 }
 
@@ -103,11 +137,18 @@ function get_DirChange(){
 	pwd # still in first directory
 }
 
+#get chip information
+function get_chipInfo(){
+	show_header "Getting Chip Information"
+	show_FlashModeInstuction get_chipInfo
+	esptool.py --port ${portX} --baud 115200 chip_id
+}
+
 #graceful exit
 function show_Exit(){
 	clear
 	show_header "Hit ANY! key to exit"
-	read exitY
+	#read exitY
 	exit
 }
 #esptool.py --port /dev/ttyUSB0 --baud 115200 write_flash --flash_freq 80m --flash_mode qio --flash_size 4MB 0x0000 espruino_1v93_esp8266_4mb_combined_4096.bin
@@ -118,23 +159,7 @@ function set_Init(){
 	printf "IN set_Init: "
 }
 
-function show_MainMenu(){
-	show_header "MAIN MENU"
-	printf "\nPlease make selection\n"
-	printf "\n1) Device information: "
-	printf "\n2) Erase Flash:"
-	printf "\n3) Program Flash: Combine 4MB"
-	printf "\n4) Program Flash: Segment 4MB"
-	printf "\n5) Program Flash: BLANK!\n"
-	printf "\n *** HIT q TO QUIT! ***\n"
-	read selectionY
-	if [ $selectionY != "q"] || [ $selectionY -le 5 ]
-	then 
-		return ${selectionY}
-	else 
-		show_Exit
-	fi
-}
+
 
 #parse batch file arguments and process code flow, low level state machine
 function get_State(){
@@ -151,23 +176,59 @@ function get_State(){
 	fi
 }
 
+function flash4mbCombine(){
+	show_header "IN: flash4mbCombine"
+	#esptool.py --port ${portX} --baud 115200 write_flash --flash_freq 80m --flash_mode qio --flash_size 4MB 0x0000 espruino_1v93_esp8266_4mb_combined_4096.bin 
+	esptool.py --port /dev/ttyUSB0 --baud 115200 write_flash --flash_freq 80m --flash_mode qio --flash_size 4MB 0x0000 espruino_1v93_esp8266_4mb_combined_4096.bin
+}
+
+function flash4mbSegment(){
+	show_header "IN: flash4mbSegment()"
+	#esptool.py --port ${portX} --baud 115200 write_flash --flash_freq 80m --flash_mode qio --flash_size 4MB 0x0000 espruino_1v93_esp8266_4mb_combined_4096.bin 
+}
+
+
+function show_MainMenu(){
+	show_header "MAIN MENU"
+	printf "\nPlease make a selection\n"
+	printf "\n1) Device information: "
+	printf "\n2) Erase Flash:"
+	printf "\n3) Program Flash: Combine 4MB"
+	printf "\n4) Program Flash: Segment 4MB"
+	printf "\n5) Program Flash: BLANK!\n"
+	printf "\n *** HIT q TO QUIT! ***\n"
+	read selectionY
+	#if [ $selectionY == "q" ] || [ $selectionY -le 5 ]
+	if [ "$selectionY" != "q" ]
+	then 
+		return ${selectionY}
+	else
+		return 255
+	fi
+}
+
 function set_ParseMenu(){
 	clear
 	local selectionY=$1
-	show_header "IN: set_ParseMenu($selectionY)"
+	#show_header "IN: set_ParseMenu($selectionY)"
 	case $selectionY in
-		1)	printf "1) Device information:"
-			printf "= ${selectionY}";; #1) Device information:
-		2)  printf "2) Erase Flash:"
-			printf "= ${selectionY}";; #2) Erase Flash:
-		3)  printf "3) Program Flash: Combine 4MB"
-			printf "= ${selectionY}";; #3) Program Flash: Combine 4MB
-		4)  printf "Program Flash: Segment 4MB"
-			printf "= ${selectionY}";; #4) Program Flash: Segment 4MB
-		5)  printf "Program Flash: BLANK!"
-			printf "= ${selectionY}";; #5) Program Flash: BLANK!\n\n
-	  "q") 	printf "Goodbye :)"
-			printf "= ${selectionY}";; #5) Program Flash: BLANK!\n\n			
+		1)	printf "1) Device information:\n" #1) Device information:
+			#printf "= ${selectionY}\n"
+			get_chipInfo;; 
+		2)  printf "2) Erase Flash:\n" #2) Erase Flash:
+			printf "= ${selectionY}\n"
+			get_EraseFlash;; 
+		3)  printf "3) Program Flash: Combine 4MB\n" #3) Program Flash: Combine 4MB
+			printf "= ${selectionY}\n"
+			flash4mbCombine;; 
+		4)  printf "Program Flash: Segment 4MB\n" #4) Program Flash: Segment 4MB
+			printf "= ${selectionY}\n"
+			flash4mbSegment\n;; 
+		5)  printf "Program Flash: BLANK!\n" #5) Program Flash: BLANK!
+			printf "= ${selectionY}\n";; 
+	  255) 	printf "Goodbye :)\n" #q) quit/exit
+			printf "= ${selectionY}\n"
+			show_Exit;; 			
 	esac
 }
 
