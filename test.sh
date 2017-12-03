@@ -196,6 +196,7 @@ function show_MainMenu(){
 	printf "\n3) Program Flash: Combine 4MB"
 	printf "\n4) Program Flash: Segment 4MB"
 	printf "\n5) Program Flash: BLANK!\n"
+	printf "\n6) List Files: *.bin\n"
 	printf "\n *** HIT q TO QUIT! ***\n"
 	read selectionY
 	#if [ $selectionY == "q" ] || [ $selectionY -le 5 ]
@@ -226,6 +227,10 @@ function set_ParseMenu(){
 			flash4mbSegment\n;; 
 		5)  printf "Program Flash: BLANK!\n" #5) Program Flash: BLANK!
 			printf "= ${selectionY}\n";; 
+		6)  printf "List Files: *.bin\n" #6) List Files: *.bin\n
+			printf "= ${selectionY}\n"
+			ls -1 ./bin
+			;; 
 	  255) 	printf "Goodbye :)\n" #q) quit/exit
 			printf "= ${selectionY}\n"
 			show_Exit;; 			
