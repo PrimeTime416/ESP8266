@@ -195,8 +195,9 @@ function show_MainMenu(){
 	printf "\n2) Erase Flash:"
 	printf "\n3) Program Flash: Combine 4MB"
 	printf "\n4) Program Flash: Segment 4MB"
-	printf "\n5) Program Flash: BLANK!\n"
-	printf "\n6) List Files: *.bin\n"
+	printf "\n5) Program Flash: BLANK!"
+	printf "\n6) List Files: *.bin"
+	printf "\n7) Test Item: for test"
 	printf "\n *** HIT q TO QUIT! ***\n"
 	read selectionY
 	#if [ $selectionY == "q" ] || [ $selectionY -le 5 ]
@@ -206,6 +207,12 @@ function show_MainMenu(){
 	else
 		return 255
 	fi
+}
+
+function test(){
+	for i in ????:??:??.? ; do
+		printf "$i"
+  	done
 }
 
 function set_ParseMenu(){
@@ -230,6 +237,10 @@ function set_ParseMenu(){
 		6)  printf "List Files: *.bin\n" #6) List Files: *.bin\n
 			printf "= ${selectionY}\n"
 			ls -1 ./bin
+			;;
+		7)  printf "Test Item: for test\n" #7) used as test function
+			printf "= ${selectionY}\n"
+			test
 			;; 
 	  255) 	printf "Goodbye :)\n" #q) quit/exit
 			printf "= ${selectionY}\n"
