@@ -148,7 +148,8 @@ function get_chipInfo(){
 #get USB Port
 function get_usbPort(){
 	show_header "Getting USB Port"
-	ls /dev/ttyUSB*
+	local arrayX=($(ls -ls /dev))
+	printf "${arrayX[@]}"
 
 }
 
