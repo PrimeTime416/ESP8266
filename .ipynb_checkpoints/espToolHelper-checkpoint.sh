@@ -3,7 +3,8 @@
 #program meta information
 authorX="Anthony G. Kerr"
 contactX="a2kerr@hotmail.com"
-dateX="November 20, 2017"
+dateOG="July 08, 2018"
+dateX="January 16, 2020"
 productX="ESP82666 Flasher and Erase Program"
 statementX="This is a little help script erase and program the ESP82666 and ESP32"
 
@@ -84,7 +85,7 @@ function show_header(){
 	        \n**************************\n"
 }
 
-#get the work directory information and other file lelated stuff
+#get the work directory information and other file related stuff
 function get_DirInfo(){
 	holdX=$1
 	#dataX=$($holdX) | grep "\.bin"
@@ -144,6 +145,12 @@ function get_chipInfo(){
 	esptool.py --port ${portX} --baud 115200 chip_id
 }
 
+#get USB Port
+function get_usbPort(){
+	show_header "Getting USB Port"
+
+}
+
 #graceful exit
 function show_Exit(){
 	clear
@@ -179,7 +186,7 @@ function get_State(){
 function flash4mbCombine(){
 	show_header "IN: flash4mbCombine"
 	#esptool.py --port ${portX} --baud 115200 write_flash --flash_freq 80m --flash_mode qio --flash_size 4MB 0x0000 espruino_1v93_esp8266_4mb_combined_4096.bin 
-	esptool.py --port /dev/ttyUSB0 --baud 115200 write_flash --flash_freq 80m --flash_mode qio --flash_size 4MB 0x0000 espruino_1v93_esp8266_4mb_combined_4096.bin
+	esptool.py --port /dev/ttyUSB0 --baud 115200 write_flash --flash_freq 80m --flash_mode qio --flash_size 4MB 0x0000 ./bin/espruino_1v93_esp8266_4mb_combined_4096.bin
 }
 
 function flash4mbSegment(){
@@ -198,6 +205,7 @@ function show_MainMenu(){
 	printf "\n5) Program Flash: BLANK!"
 	printf "\n6) List Files: *.bin"
 	printf "\n7) Test Item: for test"
+	printf "\n8) Set USB Port: "
 	printf "\n *** HIT q TO QUIT! ***\n"
 	read selectionY
 	#if [ $selectionY == "q" ] || [ $selectionY -le 5 ]
@@ -241,6 +249,10 @@ function set_ParseMenu(){
 		7)  printf "Test Item: for test\n" #7) used as test function
 			printf "= ${selectionY}\n"
 			test
+			;; 
+		8)  printf "Set USB Port:\n" #8) list available USB ports
+			printf "= ${selectionY}\n"
+			ls /dev/ttyUSB*
 			;; 
 	  255) 	printf "Goodbye :)\n" #q) quit/exit
 			printf "= ${selectionY}\n"
