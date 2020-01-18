@@ -9,10 +9,15 @@ productX="ESP82666 Flasher and Erase Program"
 statementX="This is a little help script erase and program the ESP82666 and ESP32"
 
 #set argument list globally
-portX=$1
+# portX=$1 
+# baudX=$2
+# fileX=$3
+portX=$1 
 baudX=$2
 fileX=$3
-
+if [[ $1 = "" ]]; then portX="???"; fi 
+if [[ $2 = "" ]]; then baudX="115200"; fi 
+if [[ $3 = "" ]]; then fileX="???"; fi 
 #greeting
 function show_Greeting(){
 	printf "Free-ware: ${productX}\n"
@@ -148,9 +153,77 @@ function get_chipInfo(){
 #get USB Port
 function get_usbPort(){
 	show_header "Getting USB Port"
-	local arrayX=($(ls -ls /dev))
-	printf "${arrayX[@]}"
+	usbPortX="/dev/ttyUSB*"
+	usbPortList=( $(ls $usbPortX))
+	getLastCommandStatus=$(echo $?)
+	if [ $getLastCommandStatus != 0 ]; then
+			printf "\nNO PORT NOT FOUND"
+		else 
+		for indexX in ${!usbPortList[@]}; do
+			printf "$indexX) ${usbPortList[$indexX]}\n"
+		done
+	fi
+	read selectionY
+	#if [ $selectionY == "q" ] || [ $selectionY -le 5 ]
+	if [ "$selectionY" != "" ]
+	then
+		portX=${usbPortList[$selectionY]}
+		printf "Port = ${usbPortList[$selectionY]}" 
+		return ${selectionY}
+	else
+		portX="???"
+		return 255
+	fi
+}
 
+function get_Buad(){
+	show_header "Getting Baud Rate"
+	usbPortX="./*.bin"
+	usbPortList=( $(ls $usbPortX))
+	getLastCommandStatus=$(echo $?)
+	if [ $getLastCommandStatus != 0 ]; then
+			printf "\nNO PORT NOT FOUND"
+		else 
+		for indexX in ${!usbPortList[@]}; do
+			printf "$indexX) ${usbPortList[$indexX]}\n"
+		done
+	fi
+	read selectionY
+	#if [ $selectionY == "q" ] || [ $selectionY -le 5 ]
+	if [ "$selectionY" != "" ]
+	then
+		portX=${usbPortList[$selectionY]}
+		printf "Port = ${usbPortList[$selectionY]}" 
+		return ${selectionY}
+	else
+		portX="???"
+		return 255
+	fi
+}
+
+function get_Firmware(){
+	show_header "Getting Firmware"
+	usbPortX="/dev/ttyUSB*"
+	usbPortList=( $(ls $usbPortX))
+	getLastCommandStatus=$(echo $?)
+	if [ $getLastCommandStatus != 0 ]; then
+			printf "\nNO PORT NOT FOUND"
+		else 
+		for indexX in ${!usbPortList[@]}; do
+			printf "$indexX) ${usbPortList[$indexX]}\n"
+		done
+	fi
+	read selectionY
+	#if [ $selectionY == "q" ] || [ $selectionY -le 5 ]
+	if [ "$selectionY" != "" ]
+	then
+		portX=${usbPortList[$selectionY]}
+		printf "Port = ${usbPortList[$selectionY]}" 
+		return ${selectionY}
+	else
+		portX="???"
+		return 255
+	fi
 }
 
 #graceful exit
@@ -199,7 +272,10 @@ function flash4mbSegment(){
 
 function show_MainMenu(){
 	show_header "MAIN MENU"
-	printf "\nPlease make a selection\n"
+	printf "\nPort = ${portX}"
+	printf "\nBaud = ${baudX}"
+	printf "\nFirmware = ${fileX}"
+	printf "\n\nPlease make a selection\n"
 	printf "\n1) Device information: "
 	printf "\n2) Erase Flash:"
 	printf "\n3) Program Flash: Combine 4MB"
