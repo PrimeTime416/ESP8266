@@ -5,19 +5,20 @@ authorX="Anthony G. Kerr"
 contactX="a2kerr@hotmail.com"
 dateOG="July 08, 2018"
 dateX="January 16, 2020"
-productX="ESP82666 Flasher and Erase Program"
-statementX="This is a little help script erase and program the ESP82666 and ESP32"
+productX="Flasher and Erase Helper Program"
+statementX="A little \"esptool\" helper script for:\nESP82666 and ESP32 "
 
 #set argument list globally
-# portX=$1 
-# baudX=$2
-# fileX=$3
-portX=$1 
-baudX=$2
-fileX=$3
-if [[ $1 = "" ]]; then portX="???"; fi 
-if [[ $2 = "" ]]; then baudX="115200"; fi 
-if [[ $3 = "" ]]; then fileX="???"; fi 
+declare -A config_meta 
+config_meta[port]=$1
+config_meta[baud]=$2
+config_meta[firmware]=$3
+config_meta[fail]="Make sure your MCU is plugged in"
+
+if [[ ${config_meta[port]} = "" ]]; then config_meta[port]="???"; fi 
+if [[ ${config_meta[baud]} = "" ]]; then config_meta[baud]="115200"; fi 
+if [[ ${config_meta[firmware]} = "" ]]; then config_meta[firmware]="???"; fi 
+
 #greeting
 function show_Greeting(){
 	printf "Free-ware: ${productX}\n"
@@ -105,7 +106,7 @@ function get_DirInfo(){
 function run_Erase(){
 	show_header "STARTING ERASE PROCESS!"
 	#echo -e "esptool.py --port ${portX} --baud 115200 erase_flash\n"
-	printf "\nesptool.py --port ${portX} --baud 115200 erase_flash\n"
+	printf "\nesptool.py --port ${portX_Meta[port]} --baud 115200 erase_flash\n"
 	printf "\nPUT DEVICE IN FLASH MODE:\n"
 	printf "\n1) Hold FLASH button/pin down while toggling REST button\n"
 	printf "\n2) Toggling REST button/pin\n"
@@ -124,6 +125,7 @@ function run_Erase(){
 	fi
 }
 
+# Erase MCU Flash
 function get_EraseFlash(){
 	printf "\nDo you want to erase flash memory y/n?"
 	read eraseFlashY #note no need to declare new variable
@@ -147,35 +149,43 @@ function get_DirChange(){
 function get_chipInfo(){
 	show_header "Getting Chip Information"
 	show_FlashModeInstuction get_chipInfo
-	esptool.py --port ${portX} --baud 115200 chip_id
+	esptool.py --port ${config_meta[port]} --baud ${config_meta[baud]} chip_id
 }
 
 #get USB Port
 function get_usbPort(){
-	show_header "Getting USB Port"
-	usbPortX="/dev/ttyUSB*"
-	usbPortList=( $(ls $usbPortX))
+	local -A meta 
+		meta[menu]=$1
+		meta[header]="Menu: Configure Port"
+		meta[search]="/dev/ttyUSB*"
+		meta[pass]="\nPort is now set too: "
+		meta[fail]="No port found!\nMake sure your MCU is plugged in\n"
+	show_header "${meta[header]}"
+	usbPortList=( $(ls -1 ${meta[search]} 2> /dev/null))
 	getLastCommandStatus=$(echo $?)
 	if [ $getLastCommandStatus != 0 ]; then
-			printf "\nNO PORT NOT FOUND"
+			printf "${meta[fail]}"
+			return
 		else 
 		for indexX in ${!usbPortList[@]}; do
 			printf "$indexX) ${usbPortList[$indexX]}\n"
 		done
 	fi
+	printf "\nSelect Port: "
 	read selectionY
-	#if [ $selectionY == "q" ] || [ $selectionY -le 5 ]
-	if [ "$selectionY" != "" ]
+	config_meta[port]=${usbPortList[$selectionY]}
+	if [ "${config_meta[port]}" != "" ]
 	then
-		portX=${usbPortList[$selectionY]}
-		printf "Port = ${usbPortList[$selectionY]}" 
+		printf "${meta[pass]}${config_meta[port]}"
 		return ${selectionY}
 	else
-		portX="???"
+		config_meta[port]="???"
+		printf "\n*** Something went wrong! Check your selection"
 		return 255
 	fi
 }
 
+# Get Baud rate of MCU 
 function get_Buad(){
 	show_header "Getting Baud Rate"
 	usbPortX="./*.bin"
@@ -201,6 +211,7 @@ function get_Buad(){
 	fi
 }
 
+#Get firmware
 function get_Firmware(){
 	show_header "Getting Firmware"
 	usbPortX="/dev/ttyUSB*"
@@ -224,6 +235,23 @@ function get_Firmware(){
 		portX="???"
 		return 255
 	fi
+}
+
+# Get config status
+function get_configuration_status(){
+	if [[ ${config_meta[port]} = "???" ]]; then 
+		printf "Checkxx Port ${config_meta[port]}"
+		return 1 
+	elif [[ ${config_meta[baud]} = "" ]]; then 
+		printf "Check Baud Rate ${config_meta[baud]}"
+		return 2
+	elif [[ ${config_meta[firmware]} = "???" ]]; then 
+		printf "Checkx Firmware ${config_meta[firmware]}"
+		return 3
+	else 
+		printf "All Good"
+		return 0
+	fi 
 }
 
 #graceful exit
@@ -258,23 +286,25 @@ function get_State(){
 	fi
 }
 
+#Flash 4mb continious
 function flash4mbCombine(){
 	show_header "IN: flash4mbCombine"
 	#esptool.py --port ${portX} --baud 115200 write_flash --flash_freq 80m --flash_mode qio --flash_size 4MB 0x0000 espruino_1v93_esp8266_4mb_combined_4096.bin 
 	esptool.py --port /dev/ttyUSB0 --baud 115200 write_flash --flash_freq 80m --flash_mode qio --flash_size 4MB 0x0000 ./bin/espruino_1v93_esp8266_4mb_combined_4096.bin
 }
 
+#Flash 4mb segment
 function flash4mbSegment(){
 	show_header "IN: flash4mbSegment()"
 	#esptool.py --port ${portX} --baud 115200 write_flash --flash_freq 80m --flash_mode qio --flash_size 4MB 0x0000 espruino_1v93_esp8266_4mb_combined_4096.bin 
 }
 
-
+#**** Main Menu ****
 function show_MainMenu(){
 	show_header "MAIN MENU"
-	printf "\nPort = ${portX}"
-	printf "\nBaud = ${baudX}"
-	printf "\nFirmware = ${fileX}"
+	printf "\nPort = ${config_meta[port]}"
+	printf "\nBaud = ${config_meta[baud]}"
+	printf "\nFirmware = ${config_meta[firmware]}"
 	printf "\n\nPlease make a selection\n"
 	printf "\n1) Device information: "
 	printf "\n2) Erase Flash:"
@@ -295,12 +325,15 @@ function show_MainMenu(){
 	fi
 }
 
+
+# Test Function
 function test(){
 	for i in ????:??:??.? ; do
 		printf "$i"
   	done
 }
 
+#Parse Menu
 function set_ParseMenu(){
 	clear
 	local selectionY=$1
@@ -308,7 +341,15 @@ function set_ParseMenu(){
 	case $selectionY in
 		1)	printf "1) Device information:\n" #1) Device information:
 			#printf "= ${selectionY}\n"
-			get_chipInfo;; 
+			get_configuration_status
+			local returnX=$1
+			printf "\n return value ${returnX}"
+			if (( ${returnX} > 2 )); then 
+				get_chipInfo
+			else 
+				# read continueY
+				return 255
+			fi;; 
 		2)  printf "2) Erase Flash:\n" #2) Erase Flash:
 			printf "= ${selectionY}\n"
 			get_EraseFlash;; 
@@ -357,7 +398,7 @@ function main(){
 
 }
 
-#RUN*******************************************************************************************************
+#RUN *******************************************************************
 	while [ 1 ] 
 	do
 		clear
